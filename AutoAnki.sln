@@ -1,0 +1,31 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoAnki.Core", "src\AutoAnki.Core\AutoAnki.Core.csproj", "{E460C8EA-11A4-4757-982A-EC4600523B7F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoAnki.App", "src\AutoAnki.App\AutoAnki.App.csproj", "{3DCC8BC4-8107-4A53-AF09-F831669772DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoAnki.Tests", "tests\AutoAnki.Tests\AutoAnki.Tests.csproj", "{640E8756-0C71-42B0-A937-A293EF830DFE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E460C8EA-11A4-4757-982A-EC4600523B7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E460C8EA-11A4-4757-982A-EC4600523B7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E460C8EA-11A4-4757-982A-EC4600523B7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E460C8EA-11A4-4757-982A-EC4600523B7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DCC8BC4-8107-4A53-AF09-F831669772DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DCC8BC4-8107-4A53-AF09-F831669772DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DCC8BC4-8107-4A53-AF09-F831669772DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DCC8BC4-8107-4A53-AF09-F831669772DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{640E8756-0C71-42B0-A937-A293EF830DFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{640E8756-0C71-42B0-A937-A293EF830DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{640E8756-0C71-42B0-A937-A293EF830DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{640E8756-0C71-42B0-A937-A293EF830DFE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
