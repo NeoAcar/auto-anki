@@ -97,7 +97,10 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
             var enrichment = await new CardCreationService(anki, translation, example)
                 .CreateAsync(settings.TargetDeck, term, shutdown.Token);
             logger.Info("card", $"Card added using {enrichment.TranslationProvider} translation.");
-            Notify("Card added", $"Added “{term}” to {settings.TargetDeck}.", ToolTipIcon.Info);
+            Notify(
+                "Card added",
+                $"Added “{term}” to {settings.TargetDeck}.{Environment.NewLine}{enrichment.TurkishTranslation}",
+                ToolTipIcon.Info);
         }
         catch (DuplicateNoteException)
         {
