@@ -11,13 +11,16 @@ public sealed class EnrichmentService(ITranslationProvider translationProvider, 
 
         var translation = await translationTask.ConfigureAwait(false);
         var generated = await exampleTask.ConfigureAwait(false);
-        var turkish = translation?.Text;
-        var provider = translation?.Provider;
+        // Gemini already produces a translation as part of the example-generation request.
+        // It is substantially more reliable for vocabulary than MyMemory's occasional
+        // transliterations (for example, returning an English word written phonetically).
+        var turkish = generated.TurkishTranslation;
+        var provider = "Gemini";
 
         if (string.IsNullOrWhiteSpace(turkish))
         {
-            turkish = generated.TurkishTranslation;
-            provider = "Gemini fallback";
+            turkish = translation?.Text;
+            provider = translation?.Provider;
         }
 
         if (string.IsNullOrWhiteSpace(turkish) || string.IsNullOrWhiteSpace(generated.ExampleSentence))

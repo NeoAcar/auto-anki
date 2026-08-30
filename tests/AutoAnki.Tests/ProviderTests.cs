@@ -133,14 +133,25 @@ public sealed class ProviderTests
     }
 
     [Fact]
-    public async Task Enrichment_FallsBackToGeminiTranslation()
+    public async Task Enrichment_PrefersGeminiTranslationOverMyMemory()
     {
-        var service = new EnrichmentService(new FailingTranslation(), new FixedExample());
+        var service = new EnrichmentService(new FixedTranslation("güvenilir & sağlam"), new FixedExample());
 
         var result = await service.EnrichAsync("reliable", CancellationToken.None);
 
         Assert.Equal("güvenilir", result.TurkishTranslation);
-        Assert.Equal("Gemini fallback", result.TranslationProvider);
+        Assert.Equal("Gemini", result.TranslationProvider);
+    }
+
+    [Fact]
+    public async Task Enrichment_UsesMyMemoryWhenGeminiTranslationIsMissing()
+    {
+        var service = new EnrichmentService(new FixedTranslation("güvenilir"), new MissingTranslationExample());
+
+        var result = await service.EnrichAsync("reliable", CancellationToken.None);
+
+        Assert.Equal("güvenilir", result.TurkishTranslation);
+        Assert.Equal("MyMemory", result.TranslationProvider);
     }
 
     private sealed class FailingTranslation : ITranslationProvider
@@ -149,10 +160,25 @@ public sealed class ProviderTests
             Task.FromException<TranslationResult>(new ProviderException("unavailable"));
     }
 
+    private sealed class FixedTranslation(string text) : ITranslationProvider
+    {
+        public Task<TranslationResult> TranslateAsync(string textToTranslate, CancellationToken cancellationToken) =>
+            Task.FromResult(new TranslationResult(text, "MyMemory"));
+    }
+
     private sealed class FixedExample : IExampleProvider
     {
         public Task<ExampleGeneration> GenerateAsync(string term, CancellationToken cancellationToken) =>
             Task.FromResult(new ExampleGeneration("güvenilir", "She is a reliable friend in difficult situations."));
+
+        public Task<ConnectionTestResult> TestAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(new ConnectionTestResult(true, "ok"));
+    }
+
+    private sealed class MissingTranslationExample : IExampleProvider
+    {
+        public Task<ExampleGeneration> GenerateAsync(string term, CancellationToken cancellationToken) =>
+            Task.FromResult(new ExampleGeneration(string.Empty, "She is a reliable friend in difficult situations."));
 
         public Task<ConnectionTestResult> TestAsync(CancellationToken cancellationToken) =>
             Task.FromResult(new ConnectionTestResult(true, "ok"));

@@ -9,7 +9,7 @@
     <AssemblyName>AutoAnki</AssemblyName>
     <RootNamespace>AutoAnki.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>AutoAnki contributors</Authors>
     <Description>Create English-to-Turkish Anki cards from selected text anywhere in Windows.</Description>
     <Product>AutoAnki</Product>

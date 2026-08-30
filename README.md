@@ -67,7 +67,7 @@ If another application already owns `Ctrl+Shift+F12`, choose a different shortcu
 
 ## Providers
 
-AutoAnki checks Anki and duplicates before making internet requests. MyMemory supplies the Turkish translation. Gemini generates the example sentence and provides a translation fallback. `gemini-3.5-flash-lite` is the default, with another Flash-Lite model used if capacity errors occur.
+AutoAnki checks Anki and duplicates before making internet requests. Gemini generates the example sentence and Turkish translation. MyMemory remains a fallback if Gemini returns no translation. `gemini-3.5-flash-lite` is the default, with another Flash-Lite model used if capacity errors occur.
 
 ## Privacy and limitations
 
