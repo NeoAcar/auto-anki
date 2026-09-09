@@ -125,10 +125,17 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
                         Notify("No text found", "Select a tighter area around clearly visible English text.", ToolTipIcon.Warning);
                         return;
                     }
+
+                    // OCR is intentionally a one-step flow: the selected area is sent
+                    // directly to Anki after the same validation used by copied text.
+                    capture = SelectionNormalizer.Normalize(text);
                 }
-                using var entry = new WordEntryForm(text, mode == "ocr");
-                if (entry.ShowDialog() != DialogResult.OK) return;
-                capture = SelectionCaptureResult.Success(entry.Term);
+                else
+                {
+                    using var entry = new WordEntryForm(string.Empty, fromOcr: false);
+                    if (entry.ShowDialog() != DialogResult.OK) return;
+                    capture = SelectionCaptureResult.Success(entry.Term);
+                }
             }
             if (!capture.IsSuccess)
             {
