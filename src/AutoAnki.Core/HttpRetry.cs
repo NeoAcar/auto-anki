@@ -20,7 +20,7 @@ internal static class HttpRetry
 
             try
             {
-                var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeoutSource.Token)
+                var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead, timeoutSource.Token)
                     .ConfigureAwait(false);
 
                 if (!IsTransient(response.StatusCode) || attempt == 1)

@@ -19,6 +19,11 @@ if (Get-Process -Name 'AutoAnki' -ErrorAction SilentlyContinue) {
 $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 Remove-ItemProperty -LiteralPath $runKey -Name 'AutoAnki' -ErrorAction SilentlyContinue
 
+$startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'AutoAnki.lnk'
+if (Test-Path -LiteralPath $startupShortcut) {
+    Remove-Item -LiteralPath $startupShortcut -Force
+}
+
 $startMenu = Join-Path ([Environment]::GetFolderPath('Programs')) 'AutoAnki.lnk'
 if (Test-Path -LiteralPath $startMenu) {
     Remove-Item -LiteralPath $startMenu -Force

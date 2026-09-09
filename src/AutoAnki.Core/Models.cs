@@ -12,6 +12,10 @@ public sealed record AppSettings
     public string TargetDeck { get; init; } = string.Empty;
     public int HotkeyModifiers { get; init; } = 0x0002 | 0x0004; // Ctrl + Shift
     public int HotkeyVirtualKey { get; init; } = 0x7B; // F12
+    public int OcrHotkeyModifiers { get; init; } = 6;
+    public int OcrHotkeyVirtualKey { get; init; } = 0x79; // F10
+    public int ManualHotkeyModifiers { get; init; } = 6;
+    public int ManualHotkeyVirtualKey { get; init; } = 0x78; // F9
     public bool StartWithWindows { get; init; } = true;
     public string GeminiModel { get; init; } = DefaultGeminiModel;
     public string GeminiEndpoint { get; init; } = DefaultGeminiEndpoint;

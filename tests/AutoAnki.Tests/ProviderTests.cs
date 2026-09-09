@@ -144,6 +144,46 @@ public sealed class ProviderTests
     }
 
     [Fact]
+    public async Task Enrichment_DoesNotCallTranslationProviderWhenGeminiSucceeds()
+    {
+        var handler = new FakeHttpMessageHandler(_ => throw new InvalidOperationException("Must not call MyMemory"));
+        var service = new EnrichmentService(
+            new MyMemoryTranslationProvider(new HttpClient(handler), "https://translation.test/get"),
+            new FixedExample());
+
+        var result = await service.EnrichAsync("reliable", CancellationToken.None);
+
+        Assert.Equal("Gemini", result.TranslationProvider);
+        Assert.Equal(0, handler.RequestCount);
+    }
+
+    [Theory]
+    [InlineData("{\"responseData\":{\"translatedText\":\"güvenilir\"}}", true)]
+    [InlineData("not json", false)]
+    public async Task Enrichment_RealGeminiProviderAllowsTranslationFallback(string translationJson, bool succeeds)
+    {
+        var geminiHandler = new FakeHttpMessageHandler(_ => FakeHttpMessageHandler.Json(
+            """{"steps":[{"type":"model_output","content":[{"type":"text","text":"{\"turkishTranslation\":\"\",\"exampleSentence\":\"She is a reliable friend in difficult situations.\"}"}]}]}"""));
+        var translationHandler = new FakeHttpMessageHandler(_ => FakeHttpMessageHandler.Json(translationJson));
+        var service = new EnrichmentService(
+            new MyMemoryTranslationProvider(new HttpClient(translationHandler), "https://translation.test/get"),
+            new GeminiExampleProvider(new HttpClient(geminiHandler), "https://gemini.test/interactions", "test-key", "test-model"));
+
+        if (succeeds)
+        {
+            var result = await service.EnrichAsync("reliable", CancellationToken.None);
+            Assert.Equal("güvenilir", result.TurkishTranslation);
+            Assert.Equal("MyMemory", result.TranslationProvider);
+        }
+        else
+        {
+            await Assert.ThrowsAsync<ProviderException>(() => service.EnrichAsync("reliable", CancellationToken.None));
+        }
+        Assert.Equal(1, geminiHandler.RequestCount);
+        Assert.Equal(1, translationHandler.RequestCount);
+    }
+
+    [Fact]
     public async Task Enrichment_UsesMyMemoryWhenGeminiTranslationIsMissing()
     {
         var service = new EnrichmentService(new FixedTranslation("güvenilir"), new MissingTranslationExample());

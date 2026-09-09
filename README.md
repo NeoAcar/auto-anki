@@ -1,6 +1,6 @@
 # AutoAnki
 
-AutoAnki is a native Windows tray app that turns highlighted English words or short phrases into Anki vocabulary cards. Select text in Chrome, YouTube, WhatsApp, Notepad, or another copy-capable app and press `Ctrl+Shift+F12`.
+AutoAnki is a native Windows tray app that turns highlighted English words or short phrases into Anki vocabulary cards. Select text in Chrome, YouTube, WhatsApp, Notepad, or another copy-capable app and press the configured shortcut.
 
 The generated card contains:
 
@@ -58,12 +58,14 @@ To remove settings and encrypted credentials as well:
 
 1. Keep Anki Desktop open.
 2. Highlight one English word or a phrase up to 12 words/120 characters.
-3. Press the configured shortcut (`Ctrl+Shift+F11` by default).
-4. Wait for the visible AutoAnki popup and sound confirming the card was added.
+3. Press the copy shortcut (`Ctrl+Shift+F12` by default).
+4. If the text cannot be copied (for example, a video subtitle), press the OCR shortcut (`Ctrl+Shift+F10` by default), drag over the text, and choose the recognized word or phrase.
+5. If neither is convenient, press the manual-entry shortcut (`Ctrl+Shift+F9` by default) and type it.
+6. Wait for the visible AutoAnki popup and sound confirming the card was added.
 
 Right-click the tray icon to add the current selection, change settings, test connections, pause the shortcut, or exit.
 
-If another application already owns `Ctrl+Shift+F12`, choose a different shortcut in Settings.
+If another application already owns a shortcut, choose a different one in Settings. OCR runs locally through Windows English OCR; install the English language/OCR pack in Windows Settings if AutoAnki reports that no OCR language is available.
 
 ## Providers
 
@@ -73,7 +75,7 @@ AutoAnki checks Anki and duplicates before making internet requests. Gemini gene
 
 The selected term is sent to MyMemory and Google Gemini. The Gemini key is encrypted with Windows DPAPI for the current user. Logs contain error categories but not selected text, card content, clipboard data, or keys.
 
-Capture uses the foreground application's normal Copy command. It does not support OCR, password fields, UAC screens, protected content, or apps running at a higher privilege level than AutoAnki. If Anki is closed, the card is not queued.
+Capture uses the foreground application's normal Copy command, or a local full-screen OCR selection overlay when copying is unavailable. OCR cannot read text that is too small, blurred, or hidden behind protected/UAC screens. Password fields, protected content, and apps running at a higher privilege level than AutoAnki may still block capture. If Anki is closed, the card is not queued.
 
 ## License
 

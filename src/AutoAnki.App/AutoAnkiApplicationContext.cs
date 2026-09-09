@@ -9,6 +9,9 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
     private readonly SettingsStore settingsStore = new();
     private readonly FileLogger logger = new();
     private readonly GlobalHotkeyWindow hotkeyWindow = new();
+    private readonly GlobalHotkeyWindow ocrHotkey = new();
+    private readonly GlobalHotkeyWindow manualHotkey = new();
+    private readonly LocalOcrService ocr = new();
     private readonly ClipboardCaptureService clipboardCapture = new();
     private readonly CancellationTokenSource shutdown = new();
     private readonly Control dispatcher = new();
@@ -30,6 +33,8 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
 
         var menu = new ContextMenuStrip();
         menu.Items.Add("Add current selection", null, async (_, _) => await CaptureAndAddAsync());
+        menu.Items.Add("Read screen area (OCR)", null, async (_, _) => await CaptureAndAddAsync("ocr"));
+        menu.Items.Add("Type a word…", null, async (_, _) => await CaptureAndAddAsync("manual"));
         menu.Items.Add("Settings…", null, (_, _) => ShowSettings(firstRun: false));
         menu.Items.Add("Test connections", null, async (_, _) => await TestConnectionsAsync());
         pauseItem = new ToolStripMenuItem("Pause shortcut", null, (_, _) => TogglePause());
@@ -45,6 +50,8 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
             ContextMenuStrip = menu
         };
         trayIcon.DoubleClick += (_, _) => ShowSettings(firstRun: false);
+        ocrHotkey.Pressed += async (_, _) => await CaptureAndAddAsync("ocr");
+        manualHotkey.Pressed += async (_, _) => await CaptureAndAddAsync("manual");
         hotkeyWindow.Pressed += async (_, _) =>
         {
             logger.Info("hotkey", "Shortcut activated.");
@@ -65,7 +72,7 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
         logger.Info("lifecycle", "AutoAnki started.");
     }
 
-    private async Task CaptureAndAddAsync()
+    private async Task CaptureAndAddAsync(string mode = "copy")
     {
         if (Interlocked.Exchange(ref busy, 1) != 0)
         {
@@ -81,7 +88,48 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
                 return;
             }
 
-            var capture = await clipboardCapture.CaptureAsync(shutdown.Token);
+            SelectionCaptureResult capture;
+            if (mode == "copy")
+            {
+                capture = await clipboardCapture.CaptureAsync(shutdown.Token);
+            }
+            else
+            {
+                activeToast?.Close();
+                var text = string.Empty;
+                if (mode == "ocr")
+                {
+                    using var region = new RegionCaptureForm();
+                    if (region.ShowDialog() != DialogResult.OK) return;
+                    using var crop = region.Crop();
+                    using var progress = new Form
+                    {
+                        Text = "AutoAnki — reading…",
+                        Size = new Size(320, 90),
+                        StartPosition = FormStartPosition.CenterScreen,
+                        TopMost = true,
+                        FormBorderStyle = FormBorderStyle.FixedDialog,
+                        ControlBox = false
+                    };
+                    progress.Controls.Add(new Label { Text = "Reading selected area locally…", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter });
+                    progress.Show();
+                    try
+                    {
+                        var timer = System.Diagnostics.Stopwatch.StartNew();
+                        text = await Task.Run(() => ocr.ReadAsync(crop, shutdown.Token), shutdown.Token);
+                        logger.Info("ocr", $"Local recognition completed in {timer.ElapsedMilliseconds} ms.");
+                    }
+                    finally { progress.Close(); }
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        Notify("No text found", "Select a tighter area around clearly visible English text.", ToolTipIcon.Warning);
+                        return;
+                    }
+                }
+                using var entry = new WordEntryForm(text, mode == "ocr");
+                if (entry.ShowDialog() != DialogResult.OK) return;
+                capture = SelectionCaptureResult.Success(entry.Term);
+            }
             if (!capture.IsSuccess)
             {
                 logger.Info("capture", $"Selection rejected: {capture.Error}.");
@@ -124,6 +172,10 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
         catch (OperationCanceledException) when (shutdown.IsCancellationRequested)
         {
             // Normal shutdown.
+        }
+        catch (AutoAnkiException ex)
+        {
+            Notify("AutoAnki", ex.Message, ToolTipIcon.Error);
         }
         catch (Exception ex)
         {
@@ -204,7 +256,12 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
         var oldSettings = settings;
         try
         {
+            hotkeyWindow.Pause();
+            ocrHotkey.Pause();
+            manualHotkey.Pause();
             hotkeyWindow.Register(form.ResultSettings.HotkeyModifiers, form.ResultSettings.HotkeyVirtualKey);
+            ocrHotkey.Register(form.ResultSettings.OcrHotkeyModifiers, form.ResultSettings.OcrHotkeyVirtualKey);
+            manualHotkey.Register(form.ResultSettings.ManualHotkeyModifiers, form.ResultSettings.ManualHotkeyVirtualKey);
             settingsStore.Save(form.ResultSettings, form.ApiKey);
             StartupManager.SetEnabled(form.ResultSettings.StartWithWindows);
             settings = form.ResultSettings;
@@ -236,13 +293,15 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
         {
             if (hotkeyWindow.IsPaused)
             {
-                hotkeyWindow.Resume();
+                TryRegisterConfiguredHotkey(showError: true);
                 pauseItem.Text = "Pause shortcut";
                 Notify("AutoAnki resumed", "The global shortcut is active.", ToolTipIcon.Info);
             }
             else
             {
                 hotkeyWindow.Pause();
+                ocrHotkey.Pause();
+                manualHotkey.Pause();
                 pauseItem.Text = "Resume shortcut";
                 Notify("AutoAnki paused", "The global shortcut is disabled.", ToolTipIcon.Info);
             }
@@ -255,9 +314,14 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
 
     private void TryRegisterConfiguredHotkey(bool showError)
     {
+        hotkeyWindow.Pause();
+        ocrHotkey.Pause();
+        manualHotkey.Pause();
         try
         {
             hotkeyWindow.Register(settings.HotkeyModifiers, settings.HotkeyVirtualKey);
+            ocrHotkey.Register(settings.OcrHotkeyModifiers, settings.OcrHotkeyVirtualKey);
+            manualHotkey.Register(settings.ManualHotkeyModifiers, settings.ManualHotkeyVirtualKey);
             trayIcon.Text = $"AutoAnki — {HotkeyFormatter.Format(settings.HotkeyModifiers, settings.HotkeyVirtualKey)}";
         }
         catch (Win32Exception ex)
@@ -333,6 +397,8 @@ internal sealed class AutoAnkiApplicationContext : ApplicationContext
             activeToast?.Close();
             trayIcon.Dispose();
             hotkeyWindow.Dispose();
+            ocrHotkey.Dispose();
+            manualHotkey.Dispose();
             dispatcher.Dispose();
             httpClient.Dispose();
             shutdown.Dispose();

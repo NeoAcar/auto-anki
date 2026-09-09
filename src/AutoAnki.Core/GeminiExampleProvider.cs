@@ -175,10 +175,9 @@ public sealed partial class GeminiExampleProvider(
 
     private static void Validate(string term, ExampleGeneration generated)
     {
-        if (string.IsNullOrWhiteSpace(generated.TurkishTranslation) ||
-            string.IsNullOrWhiteSpace(generated.ExampleSentence))
+        if (string.IsNullOrWhiteSpace(generated.ExampleSentence))
         {
-            throw new GeminiOutputValidationException("the translation or example was empty");
+            throw new GeminiOutputValidationException("the example was empty");
         }
 
         var sentence = generated.ExampleSentence.Trim();

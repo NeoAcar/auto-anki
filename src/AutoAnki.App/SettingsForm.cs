@@ -7,6 +7,8 @@ internal sealed class SettingsForm : Form
     private readonly HttpClient httpClient;
     private readonly AppSettings originalSettings;
     private readonly bool firstRun;
+    private readonly ShortcutBox ocrShortcut;
+    private readonly ShortcutBox manualShortcut;
     private readonly CancellationTokenSource cancellation = new();
     private readonly TextBox apiKeyBox = new() { UseSystemPasswordChar = true, Dock = DockStyle.Fill };
     private readonly ComboBox deckBox = new() { DropDownStyle = ComboBoxStyle.DropDown, Dock = DockStyle.Fill };
@@ -28,13 +30,15 @@ internal sealed class SettingsForm : Form
         this.httpClient = httpClient;
         originalSettings = settings;
         this.firstRun = firstRun;
+        ocrShortcut = new ShortcutBox(settings.OcrHotkeyModifiers, settings.OcrHotkeyVirtualKey);
+        manualShortcut = new ShortcutBox(settings.ManualHotkeyModifiers, settings.ManualHotkeyVirtualKey);
         ResultSettings = settings;
         ApiKey = apiKey;
 
         Text = firstRun ? "Set up AutoAnki" : "AutoAnki Settings";
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(580, 430);
-        Size = new Size(650, 500);
+        Size = new Size(680, 650);
         ShowInTaskbar = true;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -68,7 +72,7 @@ internal sealed class SettingsForm : Form
             Dock = DockStyle.Fill,
             Padding = new Padding(18),
             ColumnCount = 1,
-            RowCount = 7,
+            RowCount = 10,
             AutoSize = true
         };
 
@@ -88,6 +92,8 @@ internal sealed class SettingsForm : Form
         var hotkeyPanel = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = false };
         hotkeyPanel.Controls.AddRange([ctrlBox, shiftBox, altBox, winBox, keyBox]);
         root.Controls.Add(CreateLabeledGroup("Global shortcut", hotkeyPanel));
+        root.Controls.Add(CreateLabeledGroup("OCR area — click and press a shortcut", ocrShortcut));
+        root.Controls.Add(CreateLabeledGroup("Type a word — click and press a shortcut", manualShortcut));
         root.Controls.Add(startupBox);
 
         var note = new Label
@@ -236,6 +242,10 @@ internal sealed class SettingsForm : Form
         SetBusy(true);
         try
         {
+            var bindings = new[] { (modifiers, keyChoice.VirtualKey),
+                (ocrShortcut.Modifiers, ocrShortcut.VirtualKey), (manualShortcut.Modifiers, manualShortcut.VirtualKey) };
+            if (bindings.Distinct().Count() != 3)
+                throw new AutoAnkiException("Choose a different shortcut for each input method.");
             var anki = new AnkiConnectClient(httpClient, originalSettings.AnkiEndpoint);
             if (!await anki.IsAvailableAsync(cancellation.Token))
             {
@@ -266,6 +276,10 @@ internal sealed class SettingsForm : Form
                 TargetDeck = deck,
                 HotkeyModifiers = modifiers,
                 HotkeyVirtualKey = keyChoice.VirtualKey,
+                OcrHotkeyModifiers = ocrShortcut.Modifiers,
+                OcrHotkeyVirtualKey = ocrShortcut.VirtualKey,
+                ManualHotkeyModifiers = manualShortcut.Modifiers,
+                ManualHotkeyVirtualKey = manualShortcut.VirtualKey,
                 StartWithWindows = startupBox.Checked
             };
             ApiKey = key;

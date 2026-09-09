@@ -4,13 +4,7 @@ public sealed class EnrichmentService(ITranslationProvider translationProvider, 
 {
     public async Task<EnrichmentResult> EnrichAsync(string term, CancellationToken cancellationToken)
     {
-        var translationTask = TryTranslateAsync(term, cancellationToken);
-        var exampleTask = exampleProvider.GenerateAsync(term, cancellationToken);
-
-        await Task.WhenAll(translationTask, exampleTask).ConfigureAwait(false);
-
-        var translation = await translationTask.ConfigureAwait(false);
-        var generated = await exampleTask.ConfigureAwait(false);
+        var generated = await exampleProvider.GenerateAsync(term, cancellationToken).ConfigureAwait(false);
         // Gemini already produces a translation as part of the example-generation request.
         // It is substantially more reliable for vocabulary than MyMemory's occasional
         // transliterations (for example, returning an English word written phonetically).
@@ -19,6 +13,7 @@ public sealed class EnrichmentService(ITranslationProvider translationProvider, 
 
         if (string.IsNullOrWhiteSpace(turkish))
         {
+            var translation = await TryTranslateAsync(term, cancellationToken).ConfigureAwait(false);
             turkish = translation?.Text;
             provider = translation?.Provider;
         }
@@ -41,7 +36,7 @@ public sealed class EnrichmentService(ITranslationProvider translationProvider, 
         {
             throw;
         }
-        catch (ProviderException)
+        catch (Exception ex) when (ex is ProviderException or System.Text.Json.JsonException or HttpRequestException or InvalidOperationException)
         {
             return null;
         }

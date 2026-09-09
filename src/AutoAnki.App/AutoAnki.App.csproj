@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -9,7 +9,7 @@
     <AssemblyName>AutoAnki</AssemblyName>
     <RootNamespace>AutoAnki.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
     <Authors>AutoAnki contributors</Authors>
     <Description>Create English-to-Turkish Anki cards from selected text anywhere in Windows.</Description>
     <Product>AutoAnki</Product>

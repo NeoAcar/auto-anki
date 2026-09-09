@@ -6,13 +6,17 @@ internal static class Program
     private const string SettingsEventName = @"Local\AutoAnki.OpenSettings";
 
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
 
         using var mutex = new Mutex(true, MutexName, out var isFirstInstance);
         if (!isFirstInstance)
         {
+            if (args.Contains("--startup", StringComparer.OrdinalIgnoreCase))
+            {
+                return;
+            }
             try
             {
                 using var existingEvent = EventWaitHandle.OpenExisting(SettingsEventName);
